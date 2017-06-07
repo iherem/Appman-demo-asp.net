@@ -6,55 +6,23 @@ using System.Web;
 using System.Web.Mvc;
 using System.Xml.Linq;
 using WebApplication1.Models;
-
+using System.Web.Mvc;
 namespace WebApplication1.Models
 {
     public class Data
     {
-        public static String ReadJson(string path) {
-            string s1 = File.ReadAllText(path);
-            string app = s1.Split('[', ']')[1];
-            Boolean hascon = true;
-            var map = new Dictionary<string, string>();
-            int count = 1;
-            string result = "";
-            while (hascon)
-            {
-                try
-                {
-                    string eachtag = s1.Split('{', '}')[count];
-                    try
-                    {
-                        string[] eachValues = eachtag.Split(',');
-                        string key = eachValues[0];
-                        string value = eachValues[1];
-                        string[] keySplit = key.Split(':');
-                        string[] valueSplit = value.Split(':');
-                        string keyFinal = keySplit[1].Replace("\"", "");
-                        string valueFinal = valueSplit[1].Replace("\"", "");
-
-                        map.Add(keyFinal.Replace(" ", string.Empty), valueFinal);
-
-                        count++;
-                    }
-                    catch (Exception e)
-                    {
-                        count++;
-                    }
-                }
-                catch (IndexOutOfRangeException e)
-                {
-                    hascon = false;
-                }
-            }
-
+        List<Action> listAction = new List<Action>();
+        public String PerformXML() {
+            
             XDocument doc = new XDocument();
             XElement root = new XElement("Application");
-            foreach (var pair in map)
+            int tmpcount = 0;
+            foreach (var pair in this.listAction)
             {
                 XElement current = root;
                 string key = pair.Key;
                 string value = pair.Value;
+                HashSet<int> tmp = new HashSet<int>();
                 if (key.Contains('_'))
                 {
                     string[] keys = key.Split('_');
@@ -80,8 +48,11 @@ namespace WebApplication1.Models
                             }
                             if (current.Element(arrKey) == null)
                             {
+
                                 XElement parent = new XElement(arrKey);
                                 current.Add(parent);
+                                tmp.Add(arr);
+                                tmpcount = 0;
                             }
                             current = current.Element(arrKey);
                             string child = "";
@@ -103,9 +74,19 @@ namespace WebApplication1.Models
                             }
                             catch (ArgumentOutOfRangeException e)
                             {
-                                XElement parent = new XElement(child);
-                                current.Add(parent);
+                                for (int j = 0; j <= arr; j++) {
+                                    try
+                                    {
+                                        current.Descendants(child).ElementAt(j);
+                                    }
+                                    catch (ArgumentOutOfRangeException a) {
+                                        XElement parent = new XElement(child);
+                                        current.Add(parent);
+                                    }
+                                }
+                               
                                 current = current.Descendants(child).ElementAt(arr);
+                                
                             }
                         }
                         else //is not array
@@ -125,18 +106,39 @@ namespace WebApplication1.Models
 
                             }
                         }
+
                     }
                 }
                 else
                 {
                     current.Add(new XElement(key, value));
                 }
-                result += pair.Key + "/" + pair.Value;
+                List<int> currentList = new List<int>();
+                foreach (var t in tmp)
+                {
+                    currentList.Add(t);
+                }
+                //result += pair.Key + "/" + pair.Value;
             }
-
             doc.Add(root);
             doc.Save("mm.xml");
-            return result;
+            //var result = "";
+            return "OK";
         }
+
+        public void addActionList(String key, dynamic value) {
+            Action action = new Action();
+            action.Key = key;
+            action.Value = value;
+            this.listAction.Add(action);
+        }
+        
     }
+    public class Action {
+        public string Key { get; set; }
+        public string Value { get; set; }
+
+    }
+
+    
 }
