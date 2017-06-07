@@ -31,9 +31,7 @@ namespace WebApplication1.Controllers
 
         public String Convert2()
         {
-            string s1 = Data.ReadJson(@"C:\Users\mm\Documents\Visual Studio 2017\Projects\WebApplication1\WebApplication1\aaa.json");
-            
-            return s1;
+            return Program.RunTest();
         }
     }
 }
